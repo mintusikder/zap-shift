@@ -2,9 +2,9 @@ import React from 'react';
 import logo from '../../assets/logo/logo.png';
 const ProFastLogo = () => {
     return (
-        <div className='flex items-center gap-2'>
-            <img src={logo} alt="" />
-            <p className="text-xl font-bold">Pro Fast</p>
+        <div className='flex items-end '>
+            <img className='mb-2' src={logo} alt="" />
+            <p className="-ml-2 text-3xl font-bold">Profast</p>
         </div>
     );
 };
