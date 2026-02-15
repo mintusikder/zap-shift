@@ -4,12 +4,16 @@ import MainLayout from "../layout/MainLayout";
 import AuthLayout from "../layout/AuthLayout";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
+import About from "../pages/Home/About";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: MainLayout,
-    children: [{ index: true, Component: Home }],
+    children: [
+      { index: true, Component: Home },
+      { path: "/about", Component: About },
+    ],
   },
   {
     path: "/",
