@@ -7,6 +7,7 @@ import Register from "../pages/Auth/Register";
 import About from "../pages/Home/About";
 import Coverage from "../pages/Home/Coverage";
 import PrivateRoute from "./PrivateRoute";
+import SendParcelForm from "../components/parcel/SendParcelForm";
 
 export const router = createBrowserRouter([
   {
@@ -16,9 +17,13 @@ export const router = createBrowserRouter([
       { index: true, Component: Home },
       {
         path: "/about",
+        Component: About,
+      },
+      {
+        path: "/send-parcel",
         element: (
           <PrivateRoute>
-            <About />
+            <SendParcelForm />
           </PrivateRoute>
         ),
       },

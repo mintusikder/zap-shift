@@ -44,6 +44,9 @@ const Navbar = () => {
               <CustomNavLink to="/">Home</CustomNavLink>
             </>
             <>
+              <CustomNavLink to="/send-parcel">Send Parcel</CustomNavLink>
+            </>
+            <>
               <CustomNavLink to="/coverage">Coverage</CustomNavLink>
             </>
             <>
@@ -79,7 +82,9 @@ const Navbar = () => {
           <>
             <CustomNavLink to="/">Home</CustomNavLink>
           </>
-
+        <>
+              <CustomNavLink to="/send-parcel">Send Parcel</CustomNavLink>
+            </>
           <>
             <CustomNavLink to="/coverage">Coverage</CustomNavLink>
           </>

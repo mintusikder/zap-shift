@@ -7,11 +7,13 @@ import { RouterProvider } from "react-router";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import AuthProvider from "./context/AuthContext/AuthProvider.jsx";
+import { Toaster } from "react-hot-toast";
 AOS.init();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <div className="font-urbanist max-w-7xl mx-auto">
       <AuthProvider>
+        <Toaster position="top-center" reverseOrder={false} />
         <RouterProvider router={router} />
       </AuthProvider>
     </div>
