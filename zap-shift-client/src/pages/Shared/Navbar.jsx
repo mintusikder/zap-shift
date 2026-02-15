@@ -1,15 +1,23 @@
 import React from "react";
-import { NavLink } from "react-router";
+import { Link, NavLink } from "react-router";
 import ProFastLogo from "./ProFastLogo";
 
 const Navbar = () => {
   const navItems = (
     <>
-      <li>
-        <NavLink to="/">Home</NavLink>
-      </li>
+      <NavLink
+        to="/"
+        className={({ isActive }) =>
+          `relative px-3 py-2 transition-colors ${
+            isActive ? "text-primary font-semibold" : "text-gray-700"
+          } after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:after:w-full`
+        }
+      >
+        Home
+      </NavLink>
     </>
   );
+
   return (
     <div className="navbar bg-base-100 shadow-sm rounded-xl mt-4">
       <div className="navbar-start">
@@ -22,13 +30,12 @@ const Navbar = () => {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              {" "}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M4 6h16M4 12h8m-8 6h16"
-              />{" "}
+              />
             </svg>
           </div>
           <ul
@@ -38,15 +45,17 @@ const Navbar = () => {
             {navItems}
           </ul>
         </div>
-        <a className="btn btn-ghost text-xl">
-          <ProFastLogo></ProFastLogo>
-        </a>
+        <Link to="/" className="inline-block">
+          <ProFastLogo />
+        </Link>
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1">{navItems}</ul>
       </div>
       <div className="navbar-end">
-        <a className="btn">Button</a>
+        <Link to={"/login"} className="btn">
+          Login
+        </Link>
       </div>
     </div>
   );
