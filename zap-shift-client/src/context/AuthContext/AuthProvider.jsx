@@ -6,10 +6,12 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
 } from "firebase/auth";
-import { auth, googleProvider } from "../firebase/firebase.config";
-import { AuthContext } from "./AuthContext";
 
+import { AuthContext } from "./AuthContext";
+import { auth } from "../../firebase/Firebase.config";
+const googleProvider = new GoogleAuthProvider();
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,7 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      console.log("Auth State Changed: ", currentUser);
       setLoading(false);
     });
 

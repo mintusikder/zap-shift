@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { useForm } from "react-hook-form";
+import useAuth from "../../hook/useAuth";
 
 const Register = () => {
   const {
@@ -12,9 +13,17 @@ const Register = () => {
 
   const password = watch("password");
 
+  const { createUser, loading } = useAuth();
+
   const onSubmit = (data) => {
-    console.log("Register Data:", data);
-    // এখানে Firebase / API call করবে
+    createUser(data.email, data.password)
+    .then(result => {
+      const user = result.user;
+      console.log("Registered User:", user);
+    })
+    .catch(error => {
+      console.error("Registration Error:", error);
+    });
   };
 
   return (
