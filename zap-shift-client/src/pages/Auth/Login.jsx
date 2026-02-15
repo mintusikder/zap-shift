@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useForm } from "react-hook-form";
 import useAuth from "../../hook/useAuth";
 import Swal from "sweetalert2";
@@ -8,8 +8,12 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
   const { signIn } = useAuth();
-  const navigate = useNavigate(); // ✅ For navigation after login
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // ✅ If user tried to visit a protected page, store that path
+  const from = location.state?.from?.pathname || "/";
+console.log("Redirecting to:", from); // Debug: Check the redirect path
   const onSubmit = async (data) => {
     setLoading(true);
     try {
@@ -25,8 +29,8 @@ const Login = () => {
         showConfirmButton: false
       });
 
-      // ✅ Redirect to home page
-      navigate("/"); 
+      // ✅ Redirect to the original page (or /about)
+      navigate(from, { replace: true });
 
       console.log("Logged in User:", user);
     } catch (error) {

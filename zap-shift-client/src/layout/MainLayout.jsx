@@ -10,15 +10,18 @@ const MainLayout = () => {
   if (loading) {
     // ✅ Show spinner while loading
     return (
-      <div className="flex justify-center items-center min-h-screen bg-base-200">
-        <button className="btn loading btn-primary text-black">Loading...</button>
+      <div className="flex justify-center items-center min-h-screen ">
+        <span className="loading loading-spinner text-primary loading-xl"></span>
       </div>
     );
   }
+
   return (
     <div>
       <Navbar></Navbar>
-      <Outlet></Outlet>
+      <div className="min-h-[calc(100vh-360px)]">
+        <Outlet></Outlet>
+      </div>
       <Footer></Footer>
     </div>
   );

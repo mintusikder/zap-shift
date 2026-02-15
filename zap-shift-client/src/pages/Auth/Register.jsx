@@ -1,36 +1,58 @@
-import React from "react";
-import { Link } from "react-router";
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useForm } from "react-hook-form";
 import useAuth from "../../hook/useAuth";
+import Swal from "sweetalert2";
 
 const Register = () => {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors }
-  } = useForm();
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // ✅ Capture the protected page the user tried to visit
+  const from = location.state?.from?.pathname || "/";
+
+  const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const password = watch("password");
+  const { createUser } = useAuth();
 
-  const { createUser, loading } = useAuth();
-
-  const onSubmit = (data) => {
-    createUser(data.email, data.password)
-    .then(result => {
+  const onSubmit = async (data) => {
+    setLoading(true);
+    try {
+      const result = await createUser(data.email, data.password);
       const user = result.user;
+
+      // ✅ Show success alert
+      await Swal.fire({
+        icon: "success",
+        title: "Registration Successful",
+        text: `Welcome, ${data.name}!`,
+        timer: 2000,
+        showConfirmButton: false
+      });
+
       console.log("Registered User:", user);
-    })
-    .catch(error => {
+
+      // ✅ Redirect to the original page (or /about)
+      navigate(from, { replace: true });
+
+    } catch (error) {
       console.error("Registration Error:", error);
-    });
+
+      Swal.fire({
+        icon: "error",
+        title: "Registration Failed",
+        text: error.message
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex justify-center items-center w-full">
       <div className="card bg-base-100 w-full max-w-md shadow-2xl">
         <div className="card-body">
-
           <h2 className="text-2xl font-bold text-center mb-2">
             Create an Account
           </h2>
@@ -39,7 +61,6 @@ const Register = () => {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
             {/* Full Name */}
             <div>
               <label className="label">
@@ -49,14 +70,10 @@ const Register = () => {
                 type="text"
                 placeholder="Enter your full name"
                 className="input input-bordered w-full"
-                {...register("name", {
-                  required: "Full name is required"
-                })}
+                {...register("name", { required: "Full name is required" })}
               />
               {errors.name && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
               )}
             </div>
 
@@ -69,14 +86,10 @@ const Register = () => {
                 type="email"
                 placeholder="Enter your email"
                 className="input input-bordered w-full"
-                {...register("email", {
-                  required: "Email is required"
-                })}
+                {...register("email", { required: "Email is required" })}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.email.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
               )}
             </div>
 
@@ -91,16 +104,11 @@ const Register = () => {
                 className="input input-bordered w-full"
                 {...register("password", {
                   required: "Password is required",
-                  minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters"
-                  }
+                  minLength: { value: 6, message: "Password must be at least 6 characters" }
                 })}
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.password.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -115,14 +123,11 @@ const Register = () => {
                 className="input input-bordered w-full"
                 {...register("confirmPassword", {
                   required: "Confirm password is required",
-                  validate: value =>
-                    value === password || "Passwords do not match"
+                  validate: value => value === password || "Passwords do not match"
                 })}
               />
               {errors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.confirmPassword.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -131,43 +136,33 @@ const Register = () => {
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm"
-                {...register("terms", {
-                  required: "You must accept the terms"
-                })}
+                {...register("terms", { required: "You must accept the terms" })}
               />
               <span className="text-sm">
-                I agree to the{" "}
-                <span className="text-primary font-medium">
-                  Terms & Conditions
-                </span>
+                I agree to the <span className="text-primary font-medium">Terms & Conditions</span>
               </span>
             </div>
             {errors.terms && (
-              <p className="text-red-500 text-sm">
-                {errors.terms.message}
-              </p>
+              <p className="text-red-500 text-sm">{errors.terms.message}</p>
             )}
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
-              className="btn text-black btn-primary w-full mt-2"
+              className={`btn text-black btn-primary w-full mt-2 ${loading ? "loading" : ""}`}
+              disabled={loading}
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </button>
-
           </form>
 
+          {/* Login Link */}
           <p className="text-center mt-6 text-sm">
             Already have an account?{" "}
-            <Link
-              to="/login"
-              className="link text-primary link-hover font-semibold"
-            >
+            <Link to="/login" className="link text-primary link-hover font-semibold">
               Login
             </Link>
           </p>
-
         </div>
       </div>
     </div>

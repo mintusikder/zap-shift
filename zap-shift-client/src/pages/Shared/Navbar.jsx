@@ -44,8 +44,12 @@ const Navbar = () => {
               <CustomNavLink to="/">Home</CustomNavLink>
             </>
             <>
+              <CustomNavLink to="/coverage">Coverage</CustomNavLink>
+            </>
+            <>
               <CustomNavLink to="/about">About</CustomNavLink>
             </>
+
             <>
               {user ? (
                 <button
@@ -74,6 +78,10 @@ const Navbar = () => {
         <ul className="menu menu-horizontal px-1">
           <>
             <CustomNavLink to="/">Home</CustomNavLink>
+          </>
+
+          <>
+            <CustomNavLink to="/coverage">Coverage</CustomNavLink>
           </>
           <>
             <CustomNavLink to="/about">About</CustomNavLink>
