@@ -93,12 +93,12 @@ const Navbar = () => {
           </>
           <>
             {user ? (
-              <button
+              <Link
                 onClick={handleLogout}
-                className="px-3 py-2 hover:text-primary transition-colors"
+                className="px-3 py-2 hover:text-primary transition-colors  "
               >
                 Logout
-              </button>
+              </Link>
             ) : (
               <Link
                 to="/login"

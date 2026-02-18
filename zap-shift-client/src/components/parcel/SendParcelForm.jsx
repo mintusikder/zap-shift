@@ -1,10 +1,14 @@
 import React, { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import axios from "axios";
+import Swal from "sweetalert2";
 import warehouseData from "../../assets/data/warehouses.json";
+import useAuth from "../../hook/useAuth";
+
 
 const SendParcelForm = () => {
+  const { user } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -13,8 +17,6 @@ const SendParcelForm = () => {
     formState: { errors },
   } = useForm();
 
-  const [deliveryCost, setDeliveryCost] = useState(null);
-  const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const parcelType = watch("parcelType");
@@ -26,13 +28,12 @@ const SendParcelForm = () => {
     return [...new Set(warehouseData.map((item) => item.city))];
   }, []);
 
-  // ✅ Get Covered Areas for a city
+  // ✅ Get Covered Areas
   const getCoveredAreas = (city) => {
     if (!city) return [];
-
     const filtered = warehouseData.filter((item) => item.city === city);
     const areas = filtered.flatMap((item) => item.covered_area || []);
-    return [...new Set(areas)]; // remove duplicates
+    return [...new Set(areas)];
   };
 
   // ✅ Calculate Delivery Cost
@@ -45,48 +46,80 @@ const SendParcelForm = () => {
     }
 
     if (data.senderCity !== data.receiverCity) cost += 50;
+
     return cost;
   };
 
+  // ✅ Submit Handler
   const onSubmit = (data) => {
-    const cost = calculateCost(data);
-    setDeliveryCost(cost);
-    setFormData(data);
+    if (!user) {
+      Swal.fire("Login Required", "Please login first!", "warning");
+      return;
+    }
 
-    toast(
-      (t) => (
-        <div>
-          <p className="font-semibold text-lg">Delivery Cost: ৳ {cost}</p>
-          <button
-            onClick={() => confirmOrder(t.id)}
-            className="bg-green-600 text-white px-4 py-1 mt-3 rounded"
-          >
-            Confirm Order
-          </button>
+    const cost = calculateCost(data);
+
+    const finalData = {
+      ...data,
+      deliveryCost: cost,
+      trackingId: "TRK-" + Date.now(),
+      userName: user?.displayName,
+      userEmail: user?.email,
+      creation_date: new Date(),
+      status: "Pending",
+      paymentStatus: "Unpaid",
+      deliveryType:
+        data.senderCity === data.receiverCity
+          ? "Same City"
+          : "Outside City",
+    };
+    console.log(finalData)
+    Swal.fire({
+      title: "Confirm Your Parcel",
+      html: `
+        <div style="text-align:left;font-size:14px">
+          <p><strong>Tracking ID:</strong> ${finalData.trackingId}</p>
+          <p><strong>Parcel:</strong> ${data.title}</p>
+          <p><strong>Type:</strong> ${data.parcelType}</p>
+          <p><strong>Sender:</strong> ${data.senderCity}</p>
+          <p><strong>Receiver:</strong> ${data.receiverCity}</p>
+          <p><strong>Delivery Type:</strong> ${finalData.deliveryType}</p>
+          <p><strong>Total Cost:</strong> ৳ ${cost}</p>
+          <p><strong>Status:</strong> Pending</p>
+          <p><strong>Payment:</strong> Unpaid</p>
         </div>
-      ),
-      { duration: 6000 }
-    );
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Proceed to Payment",
+      cancelButtonText: "Continue Edit",
+      confirmButtonColor: "#CAEB66",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        saveParcel(finalData);
+      }
+    });
   };
 
-  const confirmOrder = async (toastId) => {
-    setLoading(true);
+  // ✅ Save Parcel to Database
+  const saveParcel = async (parcelData) => {
     try {
-      const finalData = {
-        ...formData,
-        deliveryCost,
-        creation_date: new Date(),
-        status: "Pending",
-      };
-      await axios.post("http://localhost:5000/parcels", finalData);
-      toast.success("Parcel Saved Successfully!");
+      setLoading(true);
+      console.log("Saving Parcel Data:", parcelData);
+      // await axios.post("http://localhost:5000/parcels", parcelData);
+
+      Swal.fire({
+        icon: "success",
+        title: "Parcel Saved Successfully!",
+        text: "Now redirect to payment page.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
       reset();
-      setDeliveryCost(null);
     } catch (error) {
-      toast.error("Failed to save parcel.");
+      Swal.fire("Error", "Failed to save parcel", "error");
     } finally {
       setLoading(false);
-      toast.dismiss(toastId);
     }
   };
 
@@ -99,9 +132,11 @@ const SendParcelForm = () => {
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+
           {/* Parcel Info */}
           <div>
             <h3 className="font-semibold text-lg mb-3">Parcel Info</h3>
+
             <select
               {...register("parcelType", { required: "Type is required" })}
               className="input w-full mb-3"
@@ -110,19 +145,26 @@ const SendParcelForm = () => {
               <option value="document">Document</option>
               <option value="non-document">Non-Document</option>
             </select>
-            {errors.parcelType && <p className="text-red-500">{errors.parcelType.message}</p>}
+            {errors.parcelType && (
+              <p className="text-red-500">{errors.parcelType.message}</p>
+            )}
 
             <input
               {...register("title", { required: "Title is required" })}
               placeholder="Parcel Title"
               className="input w-full mb-3"
             />
-            {errors.title && <p className="text-red-500">{errors.title.message}</p>}
+            {errors.title && (
+              <p className="text-red-500">{errors.title.message}</p>
+            )}
 
             {parcelType === "non-document" && (
               <input
                 type="number"
-                {...register("weight", { required: "Weight is required", min: { value: 1, message: "Minimum weight 1kg" } })}
+                {...register("weight", {
+                  required: "Weight is required",
+                  min: { value: 1, message: "Minimum weight 1kg" },
+                })}
                 placeholder="Weight (KG)"
                 className="input w-full mb-3"
               />
@@ -132,52 +174,117 @@ const SendParcelForm = () => {
           {/* Sender Info */}
           <div>
             <h3 className="font-semibold text-lg mb-3">Sender Info</h3>
-            <input {...register("senderName", { required: true })} defaultValue="Mintu Sikder" placeholder="Sender Name" className="input w-full mb-3" />
-            <input {...register("senderContact", { required: true })} placeholder="Contact" className="input w-full mb-3" />
 
-            <select {...register("senderCity", { required: true })} className="input w-full mb-3">
+            <input
+              {...register("senderName", { required: true })}
+              defaultValue={user?.displayName}
+              placeholder="Sender Name"
+              className="input w-full mb-3"
+            />
+
+            <input
+              {...register("senderContact", { required: true })}
+              placeholder="Contact"
+              className="input w-full mb-3"
+            />
+
+            <select
+              {...register("senderCity", { required: true })}
+              className="input w-full mb-3"
+            >
               <option value="">Select City</option>
               {cities.map((city) => (
-                <option key={`sender-${city}`} value={city}>{city}</option>
+                <option key={`sender-${city}`} value={city}>
+                  {city}
+                </option>
               ))}
             </select>
 
-            <select {...register("senderCoveredArea", { required: true })} disabled={!senderCity} className="input w-full mb-3">
+            <select
+              {...register("senderCoveredArea", { required: true })}
+              disabled={!senderCity}
+              className="input w-full mb-3"
+            >
               <option value="">Select Covered Area</option>
               {getCoveredAreas(senderCity).map((area) => (
-                <option key={`sender-area-${area}`} value={area}>{area}</option>
+                <option key={`sender-area-${area}`} value={area}>
+                  {area}
+                </option>
               ))}
             </select>
 
-            <input {...register("senderAddress", { required: true })} placeholder="Address" className="input w-full mb-3" />
-            <textarea {...register("pickupInstruction", { required: true })} placeholder="Pickup Instruction" className="input w-full" />
+            <input
+              {...register("senderAddress", { required: true })}
+              placeholder="Address"
+              className="input w-full mb-3"
+            />
+
+            <textarea
+              {...register("pickupInstruction", { required: true })}
+              placeholder="Pickup Instruction"
+              className="input w-full"
+            />
           </div>
 
           {/* Receiver Info */}
           <div>
             <h3 className="font-semibold text-lg mb-3">Receiver Info</h3>
-            <input {...register("receiverName", { required: true })} placeholder="Receiver Name" className="input w-full mb-3" />
-            <input {...register("receiverContact", { required: true })} placeholder="Contact" className="input w-full mb-3" />
 
-            <select {...register("receiverCity", { required: true })} className="input w-full mb-3">
+            <input
+              {...register("receiverName", { required: true })}
+              placeholder="Receiver Name"
+              className="input w-full mb-3"
+            />
+
+            <input
+              {...register("receiverContact", { required: true })}
+              placeholder="Contact"
+              className="input w-full mb-3"
+            />
+
+            <select
+              {...register("receiverCity", { required: true })}
+              className="input w-full mb-3"
+            >
               <option value="">Select City</option>
               {cities.map((city) => (
-                <option key={`receiver-${city}`} value={city}>{city}</option>
+                <option key={`receiver-${city}`} value={city}>
+                  {city}
+                </option>
               ))}
             </select>
 
-            <select {...register("receiverCoveredArea", { required: true })} disabled={!receiverCity} className="input w-full mb-3">
+            <select
+              {...register("receiverCoveredArea", { required: true })}
+              disabled={!receiverCity}
+              className="input w-full mb-3"
+            >
               <option value="">Select Covered Area</option>
               {getCoveredAreas(receiverCity).map((area) => (
-                <option key={`receiver-area-${area}`} value={area}>{area}</option>
+                <option key={`receiver-area-${area}`} value={area}>
+                  {area}
+                </option>
               ))}
             </select>
 
-            <input {...register("receiverAddress", { required: true })} placeholder="Address" className="input w-full mb-3" />
-            <textarea {...register("deliveryInstruction", { required: true })} placeholder="Delivery Instruction" className="input w-full" />
+            <input
+              {...register("receiverAddress", { required: true })}
+              placeholder="Address"
+              className="input w-full mb-3"
+            />
+
+            <textarea
+              {...register("deliveryInstruction", { required: true })}
+              placeholder="Delivery Instruction"
+              className="input w-full"
+            />
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-primary text-black py-2 rounded">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary text-black py-2 rounded"
+          >
             {loading ? "Processing..." : "Submit Parcel"}
           </button>
         </form>
